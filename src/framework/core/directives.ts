@@ -34,13 +34,27 @@ export function processForDirectives(root: ParentNode, context: any) {
       const localContext = Object.create(context);
       localContext[itemName] = item;
       const clone = el.cloneNode(true) as HTMLElement;
-      context.__context = localContext;
       clone.removeAttribute('angle-for');
 
       processForDirectives(clone, localContext);
       processIfDirectives(clone, localContext);
 
       clone.innerHTML = interpolateTemplate(clone.innerHTML, localContext);
+
+      const allElements = clone.querySelectorAll('*');
+
+      allElements.forEach((eventEl) => {
+        const hasEventHandler = Array.from(eventEl.attributes).some(attr => attr.name.startsWith('('));
+        if (hasEventHandler) {
+          eventEl.setAttribute('angle-data-local-context', JSON.stringify(localContext));
+        }
+      });
+      
+      const hasEventHandler = Array.from(clone.attributes).some(attr => attr.name.startsWith('('));
+
+      if (hasEventHandler) {
+        clone.setAttribute('angle-data-local-context', JSON.stringify(localContext));
+      }
 
       if (clone.innerHTML.trim() !== '') {
         parent.insertBefore(clone, el);

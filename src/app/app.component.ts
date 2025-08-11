@@ -13,9 +13,12 @@ import { Component } from 'mini-angle';
     
     <br>
     
-    <p>Count: {{ count + 1 }}</p>
-
-    <div angle-if="count >= 30">Visible if count is equals to 0.</div>
+    <div style="display: flex; gap: 1rem">
+      <span>Count: {{ count }}</span>
+      <button type="button" (click)="onAdd()">+</button>
+      <button type="button" (click)="onSubtract()">-</button>
+      <span angle-if="count === 0">Visible if count is equals to 0.</span>
+    </div>
 
     <ul>
       <li angle-for="let item of list">
@@ -38,6 +41,14 @@ export class AppComponent {
   user = {
     name: 'Paulo',
     github: 'paulotokarskiglinski'
+  }
+
+  onAdd() {
+    this.count = this.count + 1;
+  }
+
+  onSubtract() {
+    this.count = this.count - 1;
   }
 
   onClick(item: string) {
