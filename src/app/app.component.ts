@@ -69,11 +69,13 @@ import { CountService } from './count.service';
 
     <p>List:</p>
     <ul class="list">
-      <li angle-for="let item of list">
+      <li angle-for="let item of list; index as i; count as c; first as f; last as l">
         <div angle-if="item !== 'Banana'">
+          <span>#{{ i + 1 }}</span>
           <button type="button" (click)="onClick(item)">{{ item }}</button>  
         </div>
       </li>
+      <small>List length: {{ list.length }}</small>
     </ul>
 
   <br>
