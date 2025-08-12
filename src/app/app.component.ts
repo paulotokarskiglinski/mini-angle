@@ -1,6 +1,7 @@
-import { Component } from 'mini-angle';
+import { Component, inject } from 'mini-angle';
 import { AboutComponent } from './about.component';
 import { HighlightDirective } from './highlight.directive';
+import { CountService } from './count.service';
 
 @Component({
   selector: 'app',
@@ -81,11 +82,11 @@ import { HighlightDirective } from './highlight.directive';
   `
 })
 export class AppComponent {
+  private readonly countService = inject(CountService);
+
   title = 'Welcome to  Mini-Angle!';
 
   description = 'Interpolation is working!';
-
-  count: number = 0;
 
   list: string[] = ['Apple', 'Banana', 'Grape'];
 
@@ -94,12 +95,16 @@ export class AppComponent {
     github: 'paulotokarskiglinski'
   }
 
+  get count() {
+    return this.countService.get();
+  }
+
   onAdd() {
-    this.count = this.count + 1;
+    this.countService.increment();
   }
 
   onSubtract() {
-    this.count = this.count - 1;
+    this.countService.decrement();
   }
 
   onClick(item: string) {
