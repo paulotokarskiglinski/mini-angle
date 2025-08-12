@@ -1,6 +1,8 @@
 import { interpolateTemplate } from './renderer';
 import { processIfDirectives, processForDirectives } from './directives';
 import { bindEvents } from './events';
+import { processImports } from './imports';
+import { processComponentStyles } from './styles';
 
 const componentInstances = new Map<string, any>();
 
@@ -15,6 +17,7 @@ export function renderComponent(componentClass: any) {
 
 function renderComponentInstance(componentClass: any, instance: any) {
   const templateHTML = componentClass.template;
+
   if (!templateHTML) {
     throw new Error('The Component is missing the template.');
   }
@@ -30,10 +33,23 @@ function renderComponentInstance(componentClass: any, instance: any) {
   wrapper.appendChild(fragment.cloneNode(true));
   wrapper.innerHTML = interpolateTemplate(wrapper.innerHTML, instance);
 
-  const host = document.querySelector(componentClass.selector);
+  let host: Element | null = null;
+  
+  host = document.querySelector(componentClass.selector);
+
+  if (!host) {
+    host = document.createElement(componentClass.selector);
+    if (host) {
+      document.body.appendChild(host);
+    }
+  }
   
   if (host) {
     host.innerHTML = wrapper.innerHTML;
+
+    processComponentStyles(componentClass);
+
+    processImports(host, componentClass);
     bindEvents(host, instance, componentClass.selector);
   }
 }

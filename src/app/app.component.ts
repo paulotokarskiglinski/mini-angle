@@ -1,10 +1,54 @@
 import { Component } from 'mini-angle';
+import { AboutComponent } from './about.component';
+import { HighlightDirective } from './highlight.directive';
 
 @Component({
-  selector: '#app',
+  selector: 'app',
+  imports: [AboutComponent, HighlightDirective],
+  styles: `
+    :host {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #fafafa;
+      border-radius: 8px;
+    }
+    
+    h1 {
+      color: #333;
+      text-align: center;
+    }
+    
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    
+    button:hover {
+      background-color: #0056b3;
+    }
+    
+    .counter-section {
+      gap: 0.5rem;
+      display: flex;
+      align-items: center;
+    }
+
+    ul.list {
+      padding-left: 1rem;
+      list-style-type: none;
+
+      li {
+        padding-bottom: 0.5rem;
+      }
+    }
+  `,
   template: `
     <h1>{{ title }}</h1>
-    <p>{{ description }}</p>
+    <p appHighlight>{{ description }}</p>
 
     <br>
 
@@ -13,20 +57,27 @@ import { Component } from 'mini-angle';
     
     <br>
     
-    <div style="display: flex; gap: 1rem">
+    <div class="counter-section">
       <span>Count: {{ count }}</span>
       <button type="button" (click)="onAdd()">+</button>
       <button type="button" (click)="onSubtract()">-</button>
       <span angle-if="count === 0">Visible if count is equals to 0.</span>
     </div>
 
-    <ul>
+    <br>
+
+    <p>List:</p>
+    <ul class="list">
       <li angle-for="let item of list">
         <div angle-if="item !== 'Banana'">
           <button type="button" (click)="onClick(item)">{{ item }}</button>  
         </div>
       </li>
     </ul>
+
+  <br>
+
+  <about></about>
   `
 })
 export class AppComponent {
