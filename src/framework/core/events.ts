@@ -19,6 +19,7 @@ export function bindEvents(root: ParentNode, context: any, componentSelector?: s
           if (contextData) {
             try {
               localCtx = JSON.parse(contextData);
+              currentElement.removeAttribute('angle-data-local-context');
               break;
             } catch (e) {
               console.error('Failed to parse context data:', e);

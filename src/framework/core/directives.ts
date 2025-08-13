@@ -1,19 +1,27 @@
 import { interpolateTemplate } from './renderer';
 
 export function processIfDirectives(root: ParentNode, context: any) {  
-  root.querySelectorAll('[angle-if]').forEach(el => {
-    const expr = el.getAttribute('angle-if')!;
-    const condition = new Function('with(this) { return ' + expr + ' }').call(context);
+  let hasAngleIfElements = true;
+  
+  while (hasAngleIfElements) {
+    const elements = Array.from(root.querySelectorAll('[angle-if]'));
+    hasAngleIfElements = false;
     
-    if (!condition) {
-      el.remove();
-    } else {
-      el.removeAttribute('angle-if');
-
-      processForDirectives(el, context);
-      processIfDirectives(el, context);
+    for (const el of elements) {
+      const expr = el.getAttribute('angle-if')!;
+      const condition = new Function('with(this) { return ' + expr + ' }').call(context);
+      
+      if (!condition) {
+        el.remove();
+        hasAngleIfElements = true;
+        break;
+      } else {
+        el.removeAttribute('angle-if');
+        hasAngleIfElements = true;
+        break;
+      }
     }
-  });
+  }
 }
 
 export function processForDirectives(root: ParentNode, context: any) {
@@ -59,11 +67,10 @@ export function processForDirectives(root: ParentNode, context: any) {
 
       const clone = el.cloneNode(true) as HTMLElement;
       clone.removeAttribute('angle-for');
+      clone.innerHTML = interpolateTemplate(clone.innerHTML, localContext);
 
       processForDirectives(clone, localContext);
       processIfDirectives(clone, localContext);
-
-      clone.innerHTML = interpolateTemplate(clone.innerHTML, localContext);
 
       const allElements = clone.querySelectorAll('*');
 
