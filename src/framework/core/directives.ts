@@ -27,7 +27,11 @@ export function processForDirectives(root: ParentNode, context: any) {
     }
 
     let index: number = 0;
-    const parent = el.parentElement!;
+    const parent = el.parentElement;
+
+    if (!parent) {
+      return;
+    }
 
     for (const item of list) {
       const localContext = Object.create(context);

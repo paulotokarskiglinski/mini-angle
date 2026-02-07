@@ -2,10 +2,11 @@ import { Component, inject } from 'mini-angle';
 import { AboutComponent } from './about.component';
 import { HighlightDirective } from './highlight.directive';
 import { CountService } from './count.service';
+import { RepeatComplexComponent } from './repeat-complex.component';
 
 @Component({
   selector: 'app',
-  imports: [AboutComponent, HighlightDirective],
+  imports: [AboutComponent, HighlightDirective, RepeatComplexComponent],
   styles: `
     :host {
       font-family: Arial, sans-serif;
@@ -14,7 +15,7 @@ import { CountService } from './count.service';
       border-radius: 8px;
     }
     
-    h1 {
+    h1, h2, h3 {
       color: #333;
       text-align: center;
     }
@@ -53,9 +54,12 @@ import { CountService } from './count.service';
 
     <br>
 
-    <p>User: {{ user.name }}</p>
-    <p>GitHub: {{ user.github }}</p>
-    
+    <about></about>
+
+    <br>
+
+    <h2>Examples</h2>
+
     <br>
     
     <div class="counter-section">
@@ -78,19 +82,25 @@ import { CountService } from './count.service';
       <small>List length: {{ list.length }}</small>
     </ul>
 
-  <br>
+    <br>
 
-  <about></about>
+    <ul>
+      <li angle-for="let item of repeat">
+        <repeat-complex></repeat-complex>
+      </li>
+    </ul>
   `
 })
 export class AppComponent {
   private readonly countService = inject(CountService);
-
+  
   title = 'Welcome to  Mini-Angle!';
 
   description = 'Interpolation is working!';
 
   list: string[] = ['Apple', 'Banana', 'Grape'];
+
+  repeat: number[] = Array.from({ length: 5 });
 
   user = {
     name: 'Paulo',
@@ -110,6 +120,6 @@ export class AppComponent {
   }
 
   onClick(item: string) {
-    console.log(item)
+    console.log(item);
   }
 }

@@ -1,4 +1,5 @@
 import { reRenderComponent } from './bootstrap';
+import { getComponentInstance } from './injection';
 
 export function bindEvents(root: ParentNode, context: any, componentSelector?: string) {
   const elements = root.querySelectorAll('*');
@@ -29,8 +30,14 @@ export function bindEvents(root: ParentNode, context: any, componentSelector?: s
 
         el.addEventListener(eventName, (e) => {
           let executionContext = context;
+          
+          const componentInstance = getComponentInstance(el as HTMLElement);
+          if (componentInstance) {
+            executionContext = componentInstance;
+          }
+          
           if (localCtx && Object.keys(localCtx).length > 0) {
-            executionContext = Object.create(context);
+            executionContext = Object.create(executionContext);
             Object.assign(executionContext, localCtx);
           }
           

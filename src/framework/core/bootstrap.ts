@@ -45,7 +45,25 @@ function renderComponentInstance(componentClass: any, instance: any) {
   }
   
   if (host) {
+    const childComponentMap = new Map<string, HTMLElement[]>();
+    Array.from((host as HTMLElement).querySelectorAll('[angle-component-id]')).forEach(el => {
+      const selector = el.tagName.toLowerCase();
+      if (!childComponentMap.has(selector)) {
+        childComponentMap.set(selector, []);
+      }
+      childComponentMap.get(selector)!.push(el as HTMLElement);
+    });
+    
     host.innerHTML = wrapper.innerHTML;
+
+    childComponentMap.forEach((elements, selector) => {
+      const newElements = Array.from((host as HTMLElement).querySelectorAll(selector)) as HTMLElement[];
+      elements.forEach((savedEl, index) => {
+        if (newElements[index]) {
+          newElements[index].replaceWith(savedEl);
+        }
+      });
+    });
 
     processComponentStyles(componentClass);
 
