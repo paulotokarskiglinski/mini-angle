@@ -87,8 +87,8 @@ import { RepeatComplexComponent } from './repeat-complex.component';
     <br>
 
     <ul>
-      <li angle-for="let item of repeat">
-        <repeat-complex></repeat-complex>
+      <li angle-for="let item of repeat; index as i">
+        <repeat-complex [id]="i" (clickedEvent)="onClickedEvent($event)"></repeat-complex>
       </li>
     </ul>
   `
@@ -123,5 +123,9 @@ export class AppComponent {
 
   onClick(item: string) {
     console.log(item);
+  }
+
+  onClickedEvent(event: number) {
+    console.log(`Interacted with Component #${event}!`);
   }
 }

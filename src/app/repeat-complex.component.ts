@@ -1,4 +1,4 @@
-import { Component } from "mini-angle";
+import { Component, EventEmitter, Input, Output } from "mini-angle";
 
 @Component({
   selector: 'repeat-complex',
@@ -101,7 +101,7 @@ import { Component } from "mini-angle";
     }
   `,
   template: `
-    <p class="title">Component #{{ id }} - Counter</p>
+    <p class="title">Component #{{ id }}</p>
 
     <div class="message info">
       <strong>Testing all framework features:</strong> interpolation, events, conditionals, loops, and service injection
@@ -164,15 +164,18 @@ import { Component } from "mini-angle";
   `
 })
 export class RepeatComplexComponent {
+  @Input id: number = 0;
+  @Output clickedEvent = new EventEmitter<number>();
+
   count: number = 0;
   totalClicks: number = 0;
   isActive: boolean = true;
-  id: number = Math.floor(Math.random() * 1000);
   items: Array<{ name: string; time: string }> = [];
 
   incrementCount() {
     this.count++;
     this.totalClicks++;
+    this.clickedEvent.emit(this.id);
     console.log(`[Component #${this.id}] Counter incremented to ${this.count}`);
   }
 
@@ -180,12 +183,14 @@ export class RepeatComplexComponent {
     if (this.count > 0) {
       this.count--;
       this.totalClicks++;
+      this.clickedEvent.emit(this.id);
       console.log(`[Component #${this.id}] Counter decremented to ${this.count}`);
     }
   }
 
   toggleActive() {
     this.isActive = !this.isActive;
+    this.clickedEvent.emit(this.id);
     console.log(`[Component #${this.id}] Active state: ${this.isActive}`);
   }
 
@@ -195,12 +200,14 @@ export class RepeatComplexComponent {
       name: `Item ${this.items.length + 1}`,
       time: timestamp
     });
+    this.clickedEvent.emit(this.id);
     console.log(`[Component #${this.id}] Item added. Total items: ${this.items.length}`);
   }
 
   clearItems() {
     const count = this.items.length;
     this.items = [];
+    this.clickedEvent.emit(this.id);
     console.log(`[Component #${this.id}] Cleared ${count} items`);
   }
 
@@ -209,6 +216,7 @@ export class RepeatComplexComponent {
     this.totalClicks = 0;
     this.isActive = true;
     this.items = [];
+    this.clickedEvent.emit(this.id);
     console.log(`[Component #${this.id}] All state reset`);
   }
 }

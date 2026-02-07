@@ -76,6 +76,8 @@ export function processForDirectives(root: ParentNode, context: any) {
       processForDirectives(clone, localContext);
       processIfDirectives(clone, localContext);
 
+      clone.setAttribute('angle-data-local-context', JSON.stringify(localContext));
+
       const allElements = clone.querySelectorAll('*');
 
       allElements.forEach((eventEl: Element) => {
@@ -84,12 +86,6 @@ export function processForDirectives(root: ParentNode, context: any) {
           eventEl.setAttribute('angle-data-local-context', JSON.stringify(localContext));
         }
       });
-      
-      const hasEventHandler = Array.from(clone.attributes).some(attr => attr.name.startsWith('('));
-
-      if (hasEventHandler) {
-        clone.setAttribute('angle-data-local-context', JSON.stringify(localContext));
-      }
 
       if (clone.innerHTML.trim() !== '') {
         parent.insertBefore(clone, el);

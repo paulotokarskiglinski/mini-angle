@@ -67,7 +67,7 @@ function renderComponentInstance(componentClass: any, instance: any) {
 
     processComponentStyles(componentClass);
 
-    processImports(host, componentClass);
+    processImports(host, componentClass, instance);
     bindEvents(host, instance, componentClass.selector);
   }
 }
