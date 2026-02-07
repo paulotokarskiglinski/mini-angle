@@ -1,5 +1,6 @@
 import { reRenderComponent } from './bootstrap';
 import { getComponentInstance } from './injection';
+import { updateInterpolations } from './interpolation-tracker';
 
 export function bindEvents(root: ParentNode, context: any, componentSelector?: string) {
   const elements = root.querySelectorAll('*');
@@ -29,7 +30,10 @@ export function bindEvents(root: ParentNode, context: any, componentSelector?: s
           currentElement = currentElement.parentElement;
         }
 
-        el.addEventListener(eventName, (e) => {
+        // For ngModelChange, listen to 'input' event instead (case-insensitive)
+        const actualEventName = eventName.toLowerCase() === 'ngmodelchange' ? 'input' : eventName;
+        
+        el.addEventListener(actualEventName, (e) => {
           let executionContext = context;
           
           const componentInstance = getComponentInstance(el as HTMLElement);
@@ -43,9 +47,14 @@ export function bindEvents(root: ParentNode, context: any, componentSelector?: s
           }
           
           try {
-            new Function('event', 'with(this) { ' + handler + ' }').call(executionContext, e);
+            // For ngModelChange, pass the input value as $event instead of the DOM event
+            const eventParam = eventName.toLowerCase() === 'ngmodelchange' ? (el as HTMLInputElement).value : e;
+            new Function('$event', 'with(this) { ' + handler + ' }').call(executionContext, eventParam);
             
-            if (componentSelector) {
+            // For ngModelChange, update interpolations without full re-render to avoid losing focus
+            if (componentSelector && eventName.toLowerCase() === 'ngmodelchange') {
+              updateInterpolations(componentSelector, executionContext);
+            } else if (componentSelector) {
               setTimeout(() => reRenderComponent(componentSelector), 0);
             }
           } catch (err) {

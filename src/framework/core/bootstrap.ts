@@ -1,8 +1,10 @@
-import { interpolateTemplate } from './renderer';
+import { interpolateTemplate, processTwoWayBinding } from './renderer';
 import { processIfDirectives, processForDirectives } from './directives';
 import { bindEvents } from './events';
 import { processImports } from './imports';
 import { processComponentStyles } from './styles';
+import { processPropertyBindings } from './properties';
+import { trackInterpolations } from './interpolation-tracker';
 
 const componentInstances = new Map<string, any>();
 
@@ -16,11 +18,14 @@ export function renderComponent(componentClass: any) {
 }
 
 function renderComponentInstance(componentClass: any, instance: any) {
-  const templateHTML = componentClass.template;
+  let templateHTML = componentClass.template;
 
   if (!templateHTML) {
     throw new Error('The Component is missing the template.');
   }
+
+  // Process two-way binding syntax first
+  templateHTML = processTwoWayBinding(templateHTML);
 
   const template = document.createElement('template');
   template.innerHTML = templateHTML.trim();
@@ -45,6 +50,7 @@ function renderComponentInstance(componentClass: any, instance: any) {
   }
   
   if (host) {
+    // Preserve child components
     const childComponentMap = new Map<string, HTMLElement[]>();
     Array.from((host as HTMLElement).querySelectorAll('[angle-component-id]')).forEach(el => {
       const selector = el.tagName.toLowerCase();
@@ -56,6 +62,7 @@ function renderComponentInstance(componentClass: any, instance: any) {
     
     host.innerHTML = wrapper.innerHTML;
 
+    // Restore child components
     childComponentMap.forEach((elements, selector) => {
       const newElements = Array.from((host as HTMLElement).querySelectorAll(selector)) as HTMLElement[];
       elements.forEach((savedEl, index) => {
@@ -68,7 +75,24 @@ function renderComponentInstance(componentClass: any, instance: any) {
     processComponentStyles(componentClass);
 
     processImports(host, componentClass, instance);
+    
+    // Track interpolations for efficient updates
+    trackInterpolations(componentClass.selector, componentClass.template, host as HTMLElement, instance);
+    
+    // Get list of imported component selectors to skip in property bindings
+    const componentSelectors = componentClass.imports?.map((imp: any) => imp.selector).filter((sel: any) => sel && !sel.startsWith('[')) || [];
+    processPropertyBindings(host, instance, componentSelectors);
+    
     bindEvents(host, instance, componentClass.selector);
+    
+    // Clean up binding attributes after all processing
+    Array.from((host as HTMLElement).querySelectorAll('*')).forEach(el => {
+      Array.from(el.attributes).forEach(attr => {
+        if (attr.name.startsWith('[') || attr.name.startsWith('(')) {
+          el.removeAttribute(attr.name);
+        }
+      });
+    });
   }
 }
 

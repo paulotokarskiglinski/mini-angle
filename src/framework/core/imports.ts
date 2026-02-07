@@ -1,9 +1,11 @@
 import { setCurrentElement } from './injection';
 import { setComponentInstance } from './injection';
-import { interpolateTemplate } from './renderer';
+import { interpolateTemplate, processTwoWayBinding } from './renderer';
 import { processForDirectives, processIfDirectives } from './directives';
 import { processComponentStyles } from './styles';
+import { processPropertyBindings } from './properties';
 import { EventEmitter } from '../decorators/output';
+import { updateInterpolations, trackInterpolations } from './interpolation-tracker';
 
 export function processImports(root: ParentNode, componentClass?: any, parentContext?: any) {
   if (!componentClass || !componentClass.imports) {
@@ -22,9 +24,13 @@ export function processImports(root: ParentNode, componentClass?: any, parentCon
 function processDirective(root: ParentNode, DirectiveClass: any) {
   const attributeName = DirectiveClass.selector.replace(/[\[\]]/g, '');
   
-  const elements = root.querySelectorAll(`[${attributeName}]`);
+  // Look for both plain attribute and binding syntax [attribute]
+  const plainElements = root.querySelectorAll(`[${attributeName}]`);
+  const bindingElements = root.querySelectorAll(`[\\[${attributeName}\\]]`);
   
-  elements.forEach(element => {
+  const allElements = [...Array.from(plainElements), ...Array.from(bindingElements)];
+  
+  allElements.forEach(element => {
     setCurrentElement(element as HTMLElement);
     
     new DirectiveClass();
@@ -91,10 +97,13 @@ function processChildComponent(root: ParentNode, ComponentClass: any, parentCont
       });
     }
     
-    const childTemplate = ComponentClass.template;
+    let childTemplate = ComponentClass.template;
 
     if (childTemplate) {
       processComponentStyles(ComponentClass);
+      
+      // Process two-way binding syntax
+      childTemplate = processTwoWayBinding(childTemplate);
       
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = childTemplate;
@@ -106,19 +115,39 @@ function processChildComponent(root: ParentNode, ComponentClass: any, parentCont
       tempDiv.innerHTML = interpolateTemplate(tempDiv.innerHTML, instance);
       
       processImports(tempDiv, ComponentClass, instance);
-
+      
       element.innerHTML = tempDiv.innerHTML;
       
+      // Apply property bindings AFTER innerHTML is set to ensure input values are set correctly
+      const componentSelectors = ComponentClass.imports?.map((imp: any) => imp.selector).filter((sel: any) => sel && !sel.startsWith('[')) || [];
+      processPropertyBindings(element, instance, componentSelectors);
+      
       setComponentInstance(element as HTMLElement, instance);
+      
+      // Generate unique ID for this component instance to track its interpolations
+      const componentId = `${ComponentClass.selector}-${Date.now()}-${Math.random()}`;
+      (element as HTMLElement).setAttribute('angle-interpolation-id', componentId);
+      
+      // Track interpolations for this child component
+      trackInterpolations(componentId, ComponentClass.template, element as HTMLElement, instance);
 
-      bindEventsForComponent(element as HTMLElement, instance);
+      bindEventsForComponent(element as HTMLElement, instance, componentId);
+      
+      // Clean up binding attributes
+      Array.from((element as HTMLElement).querySelectorAll('*')).forEach(el => {
+        Array.from(el.attributes).forEach(attr => {
+          if (attr.name.startsWith('[') || attr.name.startsWith('(')) {
+            el.removeAttribute(attr.name);
+          }
+        });
+      });
       
       bindOutputs(element as HTMLElement, ComponentClass, instance, parentContext);
     }
   });
 }
 
-function bindEventsForComponent(element: HTMLElement, instance: any) {
+function bindEventsForComponent(element: HTMLElement, instance: any, interpolationId?: string) {
   const eventElements = element.querySelectorAll('*');
   
   eventElements.forEach(el => {
@@ -128,11 +157,21 @@ function bindEventsForComponent(element: HTMLElement, instance: any) {
         const eventName = match[1];
         const handler = attr.value;
         
-        el.addEventListener(eventName, (e) => {
+        // For ngModelChange, listen to 'input' event (case-insensitive)
+        const actualEventName = eventName.toLowerCase() === 'ngmodelchange' ? 'input' : eventName;
+        
+        el.addEventListener(actualEventName, (e) => {
           try {
-            new Function('event', 'with(this) { ' + handler + ' }').call(instance, e);
+            // For ngModelChange, pass the input value as $event
+            const eventParam = eventName.toLowerCase() === 'ngmodelchange' ? (el as HTMLInputElement).value : e;
+            new Function('$event', 'with(this) { ' + handler + ' }').call(instance, eventParam);
             
-            reRenderChildComponent(element, instance);
+            // For ngModelChange, update interpolations without full re-render
+            if (eventName.toLowerCase() === 'ngmodelchange' && interpolationId) {
+              updateInterpolations(interpolationId, instance);
+            } else {
+              reRenderChildComponent(element, instance);
+            }
           } catch (err) {
             console.error(`Event Handler Error ${eventName}:`, err);
           }
@@ -170,10 +209,13 @@ function bindOutputs(element: HTMLElement, ComponentClass: any, instance: any, p
 
 function reRenderChildComponent(element: HTMLElement, instance: any) {
   const ComponentClass = instance.constructor;
-  const childTemplate = ComponentClass.template;
+  let childTemplate = ComponentClass.template;
   
   if (childTemplate) {
     processComponentStyles(ComponentClass);
+    
+    // Process two-way binding syntax
+    childTemplate = processTwoWayBinding(childTemplate);
     
     const tempDiv = document.createElement('div');
     tempDiv.innerHTML = childTemplate;
@@ -184,10 +226,20 @@ function reRenderChildComponent(element: HTMLElement, instance: any) {
     
     tempDiv.innerHTML = interpolateTemplate(tempDiv.innerHTML, instance);
     
-    processImports(tempDiv, ComponentClass);
+    processImports(tempDiv, ComponentClass, instance);
     
     element.innerHTML = tempDiv.innerHTML;
     
-    bindEventsForComponent(element, instance);
+    // Apply property bindings AFTER innerHTML is set to ensure input values are restored
+    const componentSelectors = ComponentClass.imports?.map((imp: any) => imp.selector).filter((sel: any) => sel && !sel.startsWith('[')) || [];
+    processPropertyBindings(element, instance, componentSelectors);
+    
+    // Get the interpolation ID and re-track interpolations after re-render
+    const interpolationId = element.getAttribute('angle-interpolation-id');
+    if (interpolationId) {
+      trackInterpolations(interpolationId, ComponentClass.template, element, instance);
+    }
+    
+    bindEventsForComponent(element, instance, interpolationId || undefined);
   }
 }

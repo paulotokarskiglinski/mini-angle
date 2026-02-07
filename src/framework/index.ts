@@ -8,4 +8,5 @@ export { BaseComponent } from './component';
 export { BaseDirective } from './directive';
 export { ElementRef, inject } from './core/injection';
 export { HttpService } from './core/http';
+export { NgModelDirective } from './directives/ng-model';
 

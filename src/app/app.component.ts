@@ -3,10 +3,11 @@ import { AboutComponent } from './about.component';
 import { HighlightDirective } from './highlight.directive';
 import { CountService } from './count.service';
 import { RepeatComplexComponent } from './repeat-complex.component';
+import { TwoWayBindingExampleComponent } from './two-way-binding-example.component';
 
 @Component({
   selector: 'app',
-  imports: [AboutComponent, HighlightDirective, RepeatComplexComponent],
+  imports: [AboutComponent, HighlightDirective, RepeatComplexComponent, TwoWayBindingExampleComponent],
   styles: `
     :host {
       font-family: Arial, sans-serif;
@@ -86,6 +87,13 @@ import { RepeatComplexComponent } from './repeat-complex.component';
 
     <br>
 
+    <h2>Two-Way Binding Examples</h2>
+    <two-way-binding-example></two-way-binding-example>
+
+    <br>
+
+    <h2>Repeat Complex Components</h2>
+
     <ul>
       <li angle-for="let item of repeat; index as i">
         <repeat-complex [id]="i" (clickedEvent)="onClickedEvent($event)"></repeat-complex>
@@ -127,5 +135,9 @@ export class AppComponent {
 
   onClickedEvent(event: number) {
     console.log(`Interacted with Component #${event}!`);
+  }
+
+  test(event: string) {
+    console.log(event)
   }
 }
