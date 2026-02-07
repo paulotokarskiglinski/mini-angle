@@ -5,3 +5,5 @@ export { bootstrap } from './core/bootstrap';
 export { BaseComponent } from './component';
 export { BaseDirective } from './directive';
 export { ElementRef, inject } from './core/injection';
+export { HttpService } from './core/http';
+

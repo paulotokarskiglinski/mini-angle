@@ -76,6 +76,8 @@ import { RepeatComplexComponent } from './repeat-complex.component';
       <li angle-for="let item of list; index as i; count as c; first as f; last as l">
         <div angle-if="item !== 'Banana'">
           <span>#{{ i + 1 }}</span>
+          <span angle-if="f">(first)</span>
+          <span angle-if="l">(last)</span>
           <button type="button" (click)="onClick(item)">{{ item }}</button>  
         </div>
       </li>
