@@ -1,7 +1,8 @@
-import { Component, EventEmitter, Input, Output } from "mini-angle";
+import { Component, EventEmitter, Input, Output, AngleModelDirective } from "mini-angle";
 
 @Component({
   selector: 'repeat-complex',
+  imports: [AngleModelDirective],
   styles: `
     :host {
       display: block;
@@ -107,6 +108,13 @@ import { Component, EventEmitter, Input, Output } from "mini-angle";
       <strong>Testing all framework features:</strong> interpolation, events, conditionals, loops, and service injection
     </div>
 
+    <div class="form-group">
+      <label>Username:</label>
+      <input type="text" [(angleModel)]="tester" placeholder="Enter your name" />
+    </div>
+
+    <p><b>Username: </b>{{ tester }}</p>
+
     <div class="stats">
       <div class="stat">
         <span class="stat-label">Click Count</span>
@@ -166,6 +174,8 @@ import { Component, EventEmitter, Input, Output } from "mini-angle";
 export class RepeatComplexComponent {
   @Input id: number = 0;
   @Output clickedEvent = new EventEmitter<number>();
+
+  tester: string = 'Test';
 
   count: number = 0;
   totalClicks: number = 0;

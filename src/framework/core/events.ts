@@ -43,7 +43,7 @@ export function bindEvents(root: ParentNode, context: any, componentSelector?: s
           }
           
           try {
-            new Function('event', 'with(this) { ' + handler + ' }').call(executionContext, e);
+            new Function('$event', 'with(this) { ' + handler + ' }').call(executionContext, e);
             
             if (componentSelector) {
               setTimeout(() => reRenderComponent(componentSelector), 0);
